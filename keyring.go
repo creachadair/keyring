@@ -135,9 +135,8 @@ type Ring struct {
 	dkEncrypted   []byte  // data storage key (for writing output)
 	dkPlaintext   []byte  // plaintext data storage key (in-memory only)
 
-	keys      []packet.KeyInfo // key versions
-	activeKey int              // index of active key
-	maxID     ID               // maximum in-use key index
+	view  View // for read methods
+	maxID ID   // maximum in-use key index
 }
 
 // New constructs a new [Ring] from c. At minimum, a non-empty initial key and
@@ -159,8 +158,10 @@ func New(c Config) (*Ring, error) {
 		accessKeySalt: bytes.Clone(c.AccessKeySalt),
 		dkEncrypted:   ekey,
 		dkPlaintext:   pkey,
-		keys:          []packet.KeyInfo{{ID: 1, Key: bytes.Clone(c.InitialKey)}},
 		maxID:         1,
+		view: View{
+			keys: []packet.KeyInfo{{ID: 1, Key: bytes.Clone(c.InitialKey)}},
+		},
 	}), nil
 }
 
@@ -303,29 +304,47 @@ func Read(r io.Reader, accessKey AccessKeyFunc) (*Ring, error) {
 		accessKeySalt: salt.Data,
 		dkEncrypted:   encDK.Data,
 		dkPlaintext:   plainDK,
-		keys:          keys,
-		activeKey:     i,
-		maxID:         maxID,
+		view: View{
+			keys:      keys,
+			activeKey: i,
+		},
+		maxID: maxID,
 	}), nil
 }
 
 // Len reports the number of keys in r.
-func (r *Ring) Len() int { return len(r.keys) }
+func (r *Ring) Len() int { return r.view.Len() }
 
 // Active reports the current active key ID in r.
-func (r *Ring) Active() ID { return r.keys[r.activeKey].ID }
+func (r *Ring) Active() ID { return r.view.Active() }
 
-// Has reports whether r contains a key with the given ID.
-func (r *Ring) Has(id ID) bool { return packet.FindKey(r.keys, int(id)) >= 0 }
+// Has reports whether v contains a key with the given ID.
+func (r *Ring) Has(id ID) bool { return r.view.Has(id) }
+
+// Append appends the contents of the specified key to buf, and returns the
+// resulting slice. It panics if id does not exist in r.
+func (r *Ring) Append(id ID, buf []byte) []byte { return r.view.Append(id, buf) }
+
+// AppendActive appends the contents of the active key to buf, and returns
+// active ID and the updated slice.
+func (r *Ring) AppendActive(buf []byte) (ID, []byte) { return r.view.AppendActive(buf) }
+
+// Get returns a copy of the specified key. It will panic if id does not exist
+// in v.  Get is equivalent to [Ring.Append] with an empty slice.
+func (r *Ring) Get(id ID) []byte { return r.view.Get(id) }
+
+// GetActive returns the ID and a copy of the current active key.
+// It is equivalent to [Ring.AppendActive] with an empty slice.
+func (r *Ring) GetActive() (ID, []byte) { return r.view.GetActive() }
 
 // Activate activates the specified key ID in r. It has no effect if the given
 // key ID is already active. It panics if id does not exist in r.
 func (r *Ring) Activate(id ID) {
-	pos := packet.FindKey(r.keys, int(id))
+	pos := packet.FindKey(r.view.keys, int(id))
 	if pos < 0 {
 		panic(fmt.Sprintf("keyring: no such key: %v", id))
 	}
-	r.activeKey = pos
+	r.view.activeKey = pos
 }
 
 // AddRandom adds a new randomly-generated n-byte key to r, and returns its ID.
@@ -347,31 +366,6 @@ func (r *Ring) Add(key []byte) ID {
 	}
 	return r.addBytes(bytes.Clone(key))
 }
-
-// Append appends the contents of the specified key to buf, and returns the
-// resulting slice. It panics if id does not exist in r.
-func (r *Ring) Append(id ID, buf []byte) []byte {
-	pos := packet.FindKey(r.keys, id)
-	if pos < 0 {
-		panic(fmt.Sprintf("keyring: no such key: %v", id))
-	}
-	return append(buf, r.keys[pos].Key...)
-}
-
-// AppendActive appends the contents of the active key to buf, and returns
-// active ID and the updated slice.
-func (r *Ring) AppendActive(buf []byte) (ID, []byte) {
-	ki := r.keys[r.activeKey]
-	return ki.ID, append(buf, ki.Key...)
-}
-
-// Get returns a copy of the specified key. It will panic if id does not exist
-// in r.  Get is equivalent to [Ring.Append] with an empty slice.
-func (r *Ring) Get(id ID) []byte { return r.Append(id, nil) }
-
-// GetActive returns the ID and a copy of the current active key.
-// It is equivalent to [Ring.AppendActive] with an empty slice.
-func (r *Ring) GetActive() (ID, []byte) { return r.AppendActive(nil) }
 
 // Rekey generates a new data storage key for r, and changes the access key to
 // the provided value. If an error occurs, the current state of r is unchanged.
@@ -402,8 +396,8 @@ func (r *Ring) WriteTo(w io.Writer) (int64, error) {
 
 	// The keys and active key ID go into an encrypted bundle.
 	var kb packet.Buffer
-	kb.AddActiveKey(r.keys[r.activeKey].ID)
-	for _, ki := range r.keys {
+	kb.AddActiveKey(r.view.keys[r.view.activeKey].ID)
+	for _, ki := range r.view.keys {
 		kb.AddKeyringEntry(ki)
 	}
 	defer clear(kb.Bytes())

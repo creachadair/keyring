@@ -32,13 +32,15 @@ func TestRoundTripInternal(t *testing.T) {
 		dkEncrypted:   dataKeyEncrypted,
 		dkPlaintext:   dataKey,
 
-		keys: []packet.KeyInfo{
-			{ID: 1, Key: []byte("minsc")},
-			{ID: 2, Key: []byte("boo")},
-			{ID: 3, Key: []byte("dynaheir")},
+		view: View{
+			keys: []packet.KeyInfo{
+				{ID: 1, Key: []byte("minsc")},
+				{ID: 2, Key: []byte("boo")},
+				{ID: 3, Key: []byte("dynaheir")},
+			},
+			activeKey: 1,
 		},
-		activeKey: 1,
-		maxID:     3,
+		maxID: 3,
 	}
 
 	var buf bytes.Buffer
@@ -53,7 +55,7 @@ func TestRoundTripInternal(t *testing.T) {
 		t.Fatalf("Read failed: %v", err)
 	}
 
-	if diff := cmp.Diff(s, r, cmp.AllowUnexported(Ring{})); diff != "" {
+	if diff := cmp.Diff(s, r, cmp.AllowUnexported(Ring{}, View{})); diff != "" {
 		t.Errorf("Round trip (-got, +want):\n%s", diff)
 	}
 }

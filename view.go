@@ -8,21 +8,25 @@ import (
 	"github.com/creachadair/keyring/internal/packet"
 )
 
-// A View is a read-only view of a [Ring]. Keys cannot be added to a view, the
-// active key ID cannot be changed, and it cannot be written to storage.
+// A View is a read-only view of a [Ring]. A View contains no cryptographic
+// material, Keys cannot be added to it, the active key ID cannot be changed,
+// and it cannot be written to storage.
 type View struct {
 	keys      []packet.KeyInfo
 	activeKey int
 }
 
-// View returns a read-only view of r.
-func (r *Ring) View() *View {
-	cp := make([]packet.KeyInfo, len(r.keys))
-	for i, ki := range r.keys {
+func (v *View) clone() *View {
+	cp := make([]packet.KeyInfo, len(v.keys))
+	for i, ki := range v.keys {
 		cp[i] = ki.Clone()
 	}
-	return &View{keys: cp, activeKey: r.activeKey}
+	return &View{keys: cp, activeKey: v.activeKey}
 }
+
+// View returns a read-only view of r. Subsequent changes to r do not affect
+// the view after it has been initialized.
+func (r *Ring) View() *View { return r.view.clone() }
 
 // Len reports the number of keys in v.
 func (v *View) Len() int { return len(v.keys) }

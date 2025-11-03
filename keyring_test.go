@@ -363,4 +363,17 @@ func TestView(t *testing.T) {
 	if id, got := v.GetActive(); id != 1 || string(got) != testKey {
 		t.Errorf("View get: got %v, %q, want %v, %q", id, got, 1, testKey)
 	}
+
+	// Adding and activating a new key in r should not affect v.
+	r.Activate(r.Add([]byte("booga booga booga")))
+
+	if got, want := v.Len(), 1; got != want {
+		t.Errorf("View len: got %d, want %d", got, want)
+	}
+	if id, got := v.AppendActive(nil); id != 1 || string(got) != testKey {
+		t.Errorf("View append: got %v, %q, want %v, %q", id, got, 1, testKey)
+	}
+	if id, got := v.GetActive(); id != 1 || string(got) != testKey {
+		t.Errorf("View get: got %v, %q, want %v, %q", id, got, 1, testKey)
+	}
 }

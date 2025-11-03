@@ -16,19 +16,19 @@ func addCleanup(r *Ring) *Ring {
 		for _, ki := range keys {
 			clear(ki.Key)
 		}
-	}, r.keys)
+	}, r.view.keys)
 	runtime.AddCleanup(r, func(key []byte) { clear(key) }, r.dkPlaintext)
 	return r
 }
 
 func (r *Ring) addBytes(data []byte) ID {
 	r.maxID++
-	pos := len(r.keys)
-	r.keys = append(r.keys, packet.KeyInfo{
+	pos := len(r.view.keys)
+	r.view.keys = append(r.view.keys, packet.KeyInfo{
 		ID:  int(r.maxID),
 		Key: data,
 	})
-	return ID(r.keys[pos].ID)
+	return ID(r.view.keys[pos].ID)
 }
 
 // AccessKeyLen is the length in bytes of an access key.
