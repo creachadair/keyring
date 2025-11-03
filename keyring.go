@@ -158,7 +158,8 @@ func New(c Config) (*Ring, error) {
 	}), nil
 }
 
-// Reads reads, parses, and decrypts the binary representation of a [Ring] from r.
+// Read parses, and decrypts the binary representation of a [Ring] from r.
+// It fully consumes the contents of r.
 //
 // The accessKey function is called to obtain the encryption key for the ring itself.
 // If the ring has a key generation salt, it is passed to the accessKey function;
@@ -305,8 +306,7 @@ func Read(r io.Reader, accessKey AccessKeyFunc) (*Ring, error) {
 // Len reports the number of keys in r.
 func (r *Ring) Len() int { return len(r.keys) }
 
-// Active reports the current active key ID in r. It returns [InvalidKey] if
-// there is no currently active key.
+// Active reports the current active key ID in r.
 func (r *Ring) Active() ID { return ID(r.keys[r.activeKey].ID) }
 
 // Has reports whether r contains a key with the given ID.
