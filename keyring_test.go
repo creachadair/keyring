@@ -362,4 +362,14 @@ func TestView(t *testing.T) {
 	if id, got := v.AppendActive(nil); id != 1 || string(got) != testKey {
 		t.Errorf("View append: got %v, %q, want %v, %q", id, got, 1, testKey)
 	}
+
+	t.Run("SingleKey", func(t *testing.T) {
+		v := keyring.SingleKeyView([]byte(testKey))
+		if n := v.Len(); n != 1 {
+			t.Errorf("Len is %d, want 1", n)
+		}
+		if id, got := v.AppendActive(nil); id != 1 || string(got) != testKey {
+			t.Errorf("View append: got %v, %q, want %v, %q", id, got, 1, testKey)
+		}
+	})
 }

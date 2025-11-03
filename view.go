@@ -3,6 +3,7 @@
 package keyring
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/creachadair/keyring/internal/packet"
@@ -52,4 +53,15 @@ func (v *View) Append(id ID, buf []byte) []byte {
 func (v *View) AppendActive(buf []byte) (ID, []byte) {
 	ki := v.keys[v.activeKey]
 	return ki.ID, append(buf, ki.Key...)
+}
+
+// SingleKeyView constructs a [View] that exports the single provided key as
+// its only version with ID 1. It will panic if singleKey is empty.
+func SingleKeyView(singleKey []byte) *View {
+	if len(singleKey) == 0 {
+		panic("keyring: key is empty")
+	}
+	return &View{keys: []packet.KeyInfo{
+		{ID: 1, Key: bytes.Clone(singleKey)},
+	}}
 }
