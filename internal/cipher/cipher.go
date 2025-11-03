@@ -4,9 +4,12 @@ package cipher
 
 import (
 	crand "crypto/rand"
+	"crypto/sha3"
 	"fmt"
+	"hash"
 
 	"golang.org/x/crypto/chacha20poly1305"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // KeyLen defines the key length in bytes of an encryption key.
@@ -64,4 +67,22 @@ func DecryptWithKey(key, data, extra []byte) ([]byte, error) {
 	}
 	nonce, ctext := data[:aead.NonceSize()], data[aead.NonceSize():]
 	return aead.Open(nil, nonce, ctext, extra)
+}
+
+// KeyFromPassphrase returns a cryptographic key of n byte, derived via
+// [pbkdf2.Key] using the specified passphrase and a random salt.
+// If salt == nil, a new random salt is generated and returned; otherwise
+// the provided value is used in the KDF.
+// The key and the salt are returned.
+func KeyFromPassphrase(passphrase string, n int, salt []byte) (_key, _salt []byte) {
+	if salt == nil {
+		salt = make([]byte, 32)
+		crand.Read(salt)
+	}
+	key := pbkdf2.Key([]byte(passphrase), salt, 4096, n, newHash(sha3.New256))
+	return key, salt
+}
+
+func newHash[H hash.Hash](f func() H) func() hash.Hash {
+	return func() hash.Hash { return f() }
 }

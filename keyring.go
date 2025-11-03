@@ -89,9 +89,10 @@
 //	    return someKDF(baseKey, keySalt, ...)
 //	})
 //
-// If you do not use a key-derivation function, use [StaticKey].  The [HKDF]
-// and [AccessKeyFromPassphrase] helpers may also be useful if you want to
-// derive an access key from a user-provided low-entropy passphrase.
+// If you do not use a key-derivation function, use [StaticKey].
+// The [PassphraseKey] and [AccessKeyFromPassphrase] helpers may also be useful
+// if you want to derive an access key from a user-provided low-entropy
+// passphrase.
 package keyring
 
 import (

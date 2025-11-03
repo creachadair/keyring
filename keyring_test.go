@@ -272,10 +272,10 @@ func TestRekey(t *testing.T) {
 	}
 }
 
-func TestHKDF(t *testing.T) {
+func TestPassphraseKeys(t *testing.T) {
 	const passphrase = "character is what you are in the dark"
 
-	// Derive a key from passphrase with HKDF, and use it to create a keyring.
+	// Derive a key from passphrase with PBKDF2, and use it to create a keyring.
 	key, salt := keyring.AccessKeyFromPassphrase(passphrase)
 	r, err := keyring.New(keyring.Config{
 		AccessKey:     key,
@@ -291,8 +291,8 @@ func TestHKDF(t *testing.T) {
 		t.Fatalf("Write keyring failed: %v", err)
 	}
 
-	// Verify that the HKDF access key function works to re-open the keyring.
-	r2, err := keyring.Read(&buf, keyring.HKDF(passphrase))
+	// Verify that the PassphraseKey function works to re-open the keyring.
+	r2, err := keyring.Read(&buf, keyring.PassphraseKey(passphrase))
 	if err != nil {
 		t.Fatalf("Read failed: %v", err)
 	}
