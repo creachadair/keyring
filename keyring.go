@@ -402,12 +402,15 @@ func (r *Ring) WriteTo(w io.Writer) (int64, error) {
 	for _, ki := range r.keys {
 		kb.AddKeyringEntry(ki)
 	}
+	defer clear(kb.Bytes())
+
 	_, data, err := cipher.EncryptWithKey(r.dkPlaintext, kb.Bytes(), nil)
 	if err != nil {
 		return 0, fmt.Errorf("encrypt ring: %w", err)
 	}
 
 	root.AddPacket(packet.BundleType, data)
+	defer clear(root.Bytes())
 	return root.WriteTo(w)
 }
 
