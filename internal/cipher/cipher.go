@@ -5,13 +5,12 @@
 package cipher
 
 import (
+	"crypto/pbkdf2"
 	crand "crypto/rand"
 	"crypto/sha3"
 	"fmt"
-	"hash"
 
 	"golang.org/x/crypto/chacha20poly1305"
-	"golang.org/x/crypto/pbkdf2"
 )
 
 // KeyLen defines the key length in bytes of an encryption key.
@@ -81,10 +80,11 @@ func KeyFromPassphrase(passphrase string, n int, salt []byte) (_key, _salt []byt
 		salt = make([]byte, 32)
 		crand.Read(salt)
 	}
-	key := pbkdf2.Key([]byte(passphrase), salt, 4096, n, newHash(sha3.New256))
+	key, err := pbkdf2.Key(sha3.New256, passphrase, salt, 4096, n)
+	if err != nil {
+		// Can only happen if we violate FIPS key length or digest rules, both of
+		// which should never happen with our usage patterns.
+		panic(fmt.Sprintf("pbkdf2.Key failed: %v", err))
+	}
 	return key, salt
-}
-
-func newHash[H hash.Hash](f func() H) func() hash.Hash {
-	return func() hash.Hash { return f() }
 }
