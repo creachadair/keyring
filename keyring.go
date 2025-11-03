@@ -109,7 +109,7 @@ import (
 type ID int
 
 // ActiveKey is a special key ID value used to indicate the current active key
-// ID in a ring. See [Ring.AppendKey] and [Ring.GetKey].
+// ID in a ring. See [Ring.Append] and [Ring.Get].
 const ActiveKey ID = 0
 
 // A Ring is a versioned collection of byte strings, typically cryptographic
