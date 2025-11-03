@@ -94,7 +94,7 @@ func ParseActiveKey(data []byte) (int, error) {
 	if len(data) == 0 {
 		return 0, nil
 	} else if len(data) != 4 {
-		return 0, fmt.Errorf("truncated (%d < 4)", len(data))
+		return 0, fmt.Errorf("wrong data length (%d ≠ 4)", len(data))
 	}
 	return int(binary.BigEndian.Uint32(data)), nil
 }
