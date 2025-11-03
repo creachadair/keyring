@@ -53,11 +53,3 @@ func (v *View) AppendActive(buf []byte) (ID, []byte) {
 	ki := v.keys[v.activeKey]
 	return ki.ID, append(buf, ki.Key...)
 }
-
-// Get returns a copy of the specified key. It will panic if id does not exist
-// in v.  Get is equivalent to [View.Append] with an empty slice.
-func (v *View) Get(id ID) []byte { return v.Append(id, nil) }
-
-// GetActive returns the ID and a copy of the current active key.
-// It is equivalent to [View.AppendActive] with an empty slice.
-func (v *View) GetActive() (ID, []byte) { return v.AppendActive(nil) }

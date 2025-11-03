@@ -23,11 +23,11 @@ func Example() {
 	}
 
 	// Print the currently-active key.
-	fmt.Printf("Key %d: %q\n", r.Active(), r.Get(r.Active()))
+	fmt.Printf("Key %d: %q\n", r.Active(), r.Append(r.Active(), nil))
 
 	// Add another key and print that too.
 	id := r.Add([]byte("no more secrets"))
-	fmt.Printf("Key %d: %q\n", id, r.Get(id))
+	fmt.Printf("Key %d: %q\n", id, r.Append(id, nil))
 
 	// Note that the active key ID doesn't change until we say so.
 	fmt.Printf("Active ID before: %d\n", r.Active())
@@ -47,7 +47,7 @@ func Example() {
 		log.Fatalf("Read failed: %v", err)
 	}
 	fmt.Println("(reloaded)")
-	id, akey := r2.GetActive()
+	id, akey := r2.AppendActive(nil)
 	fmt.Printf("Key %d: %q\n", id, akey)
 
 	// Output:
