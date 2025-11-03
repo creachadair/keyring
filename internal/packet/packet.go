@@ -66,6 +66,9 @@ type KeyInfo struct {
 func (ki KeyInfo) compareID(id int) int  { return cmp.Compare(ki.ID, id) }
 func (ki KeyInfo) compare(o KeyInfo) int { return cmp.Compare(ki.ID, o.ID) }
 
+// Clone returns a deep clone of ki.
+func (ki KeyInfo) Clone() KeyInfo { return KeyInfo{ID: ki.ID, Key: bytes.Clone(ki.Key)} }
+
 // FindKey reports the location of the specified id in keys, or -1.
 // Precondition: keys is sorted increasing by id.
 func FindKey(keys []KeyInfo, id int) int {

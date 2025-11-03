@@ -67,15 +67,15 @@ func TestBasic(t *testing.T) {
 	if id := r.Active(); id != 1 {
 		t.Errorf("Active: got %v, want 1", id)
 	}
-	if got := string(r.Get(keyring.ActiveKey)); got != firstKey {
-		t.Errorf("Active key: got %q, want %q", got, firstKey)
+	if id, got := r.GetActive(); id != 1 || string(got) != firstKey {
+		t.Errorf("Active key: got %v, %q, want %v, %q", id, got, 1, firstKey)
 	}
 
 	// Add a new key...
 	id2 := r.Add([]byte(secondKey))
 
 	// The new key should not be active yet.
-	if got := string(r.Get(keyring.ActiveKey)); got != firstKey {
+	if got := string(r.Get(r.Active())); got != firstKey {
 		t.Errorf("Active key: got %q, want %q", got, firstKey)
 	}
 
@@ -84,8 +84,8 @@ func TestBasic(t *testing.T) {
 	if id := r.Active(); id != id2 {
 		t.Errorf("Active: got %v, want %v", id, id2)
 	}
-	if got := string(r.Get(keyring.ActiveKey)); got != secondKey {
-		t.Errorf("Active key: got %q, want %q", got, secondKey)
+	if id, got := r.GetActive(); id != id2 || string(got) != secondKey {
+		t.Errorf("Active key: got %v, %q, want %v, %q", id, got, id2, secondKey)
 	}
 
 	// Check the list of available IDs.
@@ -116,8 +116,11 @@ func TestRoundTrip(t *testing.T) {
 	if id := r.Active(); id != 1 {
 		t.Errorf("Active: got %d, want 1", id)
 	}
-	if got := string(r.Get(r.Active())); got != firstKey {
-		t.Errorf("Active key: got %q, want %q", got, firstKey)
+	if id, got := r.GetActive(); id != 1 || string(got) != firstKey {
+		t.Errorf("Active key: got %v, %q, want %v, %q", id, got, 1, firstKey)
+	}
+	if id, got := r.AppendActive(nil); id != 1 || string(got) != firstKey {
+		t.Errorf("Active key: got %v, %q, want %v, %q", id, got, 1, firstKey)
 	}
 
 	r.Activate(2)
@@ -192,10 +195,12 @@ func TestErrors(t *testing.T) {
 	})
 
 	t.Run("GetMissing", func(t *testing.T) {
+		mtest.MustPanic(t, func() { r.Get(0) })
 		mtest.MustPanic(t, func() { r.Get(12345) })
 	})
 
 	t.Run("AppendMissing", func(t *testing.T) {
+		mtest.MustPanic(t, func() { r.Append(0, nil) })
 		mtest.MustPanic(t, func() { r.Append(12345, nil) })
 	})
 
@@ -244,7 +249,7 @@ func TestRekey(t *testing.T) {
 	// Reading buf1 with k1 should work.
 	if r2, err := keyring.Read(k1, keyring.StaticKey(accessKey1)); err != nil {
 		t.Fatalf("Read k1 failed: %v", err)
-	} else if got := string(r2.Get(keyring.ActiveKey)); got != testKey {
+	} else if got := string(r2.Get(r2.Active())); got != testKey {
 		t.Errorf("k1 active: got %q, want %q", got, testKey)
 	}
 
@@ -320,19 +325,42 @@ func TestNoSharing(t *testing.T) {
 
 	// Editing the bytes we put in does not affect the stored copy.
 	clear(testKeyBytes)
-	if got := r.Append(0, nil); string(got) != testKey {
-		t.Errorf("Stored key modified: got %q, want %q", got, testKey)
+	if id, got := r.AppendActive(nil); id != 1 || string(got) != testKey {
+		t.Errorf("Stored key modified: got %v, %q, want %v, %q", id, got, 1, testKey)
 	}
 
 	// Editing the results from Get does not affect the stored copy.
-	key := r.Get(0)
+	key := r.Get(r.Active())
 	clear(key)
-	if got := r.Append(0, nil); string(got) != testKey {
+	if got := r.Append(r.Active(), nil); string(got) != testKey {
 		t.Errorf("Stored key modified: got %q, want %q", got, testKey)
 	}
 
-	testKeyBytes = r.Append(0, testKeyBytes[:0])
+	testKeyBytes = r.Append(r.Active(), testKeyBytes[:0])
 	if string(testKeyBytes) != testKey {
 		t.Errorf("Append: got %q, want %q", testKeyBytes, testKey)
+	}
+}
+
+func TestView(t *testing.T) {
+	var zero [keyring.AccessKeyLen]byte
+	const testKey = "banana quince starfruit durian"
+	r, err := keyring.New(keyring.Config{
+		InitialKey: []byte(testKey),
+		AccessKey:  zero[:],
+	})
+	if err != nil {
+		t.Fatalf("New failed: %v", err)
+	}
+
+	v := r.View()
+	if got, want := v.Len(), r.Len(); got != want {
+		t.Errorf("View len: got %d, want %d", got, want)
+	}
+	if id, got := v.AppendActive(nil); id != 1 || string(got) != testKey {
+		t.Errorf("View append: got %v, %q, want %v, %q", id, got, 1, testKey)
+	}
+	if id, got := v.GetActive(); id != 1 || string(got) != testKey {
+		t.Errorf("View get: got %v, %q, want %v, %q", id, got, 1, testKey)
 	}
 }
