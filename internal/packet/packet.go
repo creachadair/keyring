@@ -1,3 +1,5 @@
+// Copyright (C) 2025 Michael J. Fromberger. All Rights Reserved.
+
 // Packet packet defines the binary storage representation of a
 // keyring as defined by the parent package.
 //

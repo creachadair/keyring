@@ -1,3 +1,5 @@
+// Copyright (C) 2025 Michael J. Fromberger. All Rights Reserved.
+
 // Package cipher implements symmetric encryption helpers for keyrings.
 // The underlying cryptography is implemented by [chacha20poly1305].
 package cipher

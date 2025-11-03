@@ -1,3 +1,5 @@
+// Copyright (C) 2025 Michael J. Fromberger. All Rights Reserved.
+
 package keyring
 
 import (

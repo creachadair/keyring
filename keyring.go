@@ -1,3 +1,5 @@
+// Copyright (C) 2025 Michael J. Fromberger. All Rights Reserved.
+
 // Package keyring implements self-contained encrypted storage for a versioned collection of
 // versioned byte strings, typically cryptographic keys or access tokens.
 //
