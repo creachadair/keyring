@@ -78,6 +78,7 @@ func FindKey(keys []KeyInfo, id int) int {
 func SortKeysByID(keys []KeyInfo) { slices.SortFunc(keys, KeyInfo.compare) }
 
 // ParseKeyInfo parses the binary encoding of a [KeyInfo] from data.
+// The parsed key contents alias a slice of data.
 func ParseKeyInfo(data []byte) (KeyInfo, error) {
 	if len(data) < 4 {
 		return KeyInfo{}, fmt.Errorf("key truncated (%d < 4)", len(data))
@@ -133,6 +134,7 @@ const MagicByte = 0xec
 // In case of error, it returns partial results.
 // The caller is responsible for validating the Version and Reserved fields,
 // as well as packet types.
+// The contents of the parsed packets alias slices of data.
 func ParseKeyring(data []byte) (Keyring, error) {
 	if len(data) < 4 {
 		return Keyring{}, errors.New("invalid keyring: header truncated")
@@ -151,6 +153,7 @@ func ParseKeyring(data []byte) (Keyring, error) {
 // ParsePackets parses the contents of data into raw packets.
 // The base offset is added to position information in errors.
 // In case of error, all complete packets so far are reported.
+// The contents of the parsed packets alias slices of data.
 func ParsePackets(data []byte, base int) ([]Packet, error) {
 	var out []Packet
 	cur := data
