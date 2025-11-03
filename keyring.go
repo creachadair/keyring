@@ -92,6 +92,19 @@
 // The [PassphraseKey] and [AccessKeyFromPassphrase] helpers may also be useful
 // if you want to derive an access key from a user-provided low-entropy
 // passphrase.
+//
+// # Read-only usage
+//
+// To use a keyring with an API that does not need the ability to modify the
+// contents of the keyring, call [Ring.View] to obtain a read-only view.  The
+// [View] type allows reading all the existing key versions at the time it is
+// created, but stores no other cryptographic material and cannot be modified
+// or written to storage.
+//
+// Once a [View] is created, further changes to the [Ring] from which it was
+// derived do not affect the view. While a [Ring] is not safe for concurrent
+// access by multiple goroutines without separate synchronization, a [View] can
+// be shared among multiple goroutines safely.
 package keyring
 
 import (
