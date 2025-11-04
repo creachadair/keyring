@@ -372,4 +372,11 @@ func TestView(t *testing.T) {
 			t.Errorf("View append: got %v, %q, want %v, %q", id, got, 1, testKey)
 		}
 	})
+
+	t.Run("SingleKey/Empty", func(t *testing.T) {
+		mtest.MustPanic(t, func() {
+			keyring.SingleKeyView(nil)
+			keyring.SingleKeyView([]byte{})
+		})
+	})
 }
