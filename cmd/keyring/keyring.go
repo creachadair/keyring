@@ -283,7 +283,7 @@ func runDebugParse(env *command.Env, name string) error {
 		if i > 0 {
 			fmt.Println()
 		}
-		fmt.Printf("-- Packet %d: %v (%d bytes)\n", i+1, pkt.Type, len(pkt.Data))
+		fmt.Printf("-- Packet %d: [%d] %v (%d bytes)\n", i+1, byte(pkt.Type), pkt.Type, len(pkt.Data))
 		if pkt.Type != packet.BundleType || dataKey == nil {
 			hexDump(os.Stdout, pkt.Data, "")
 			continue
@@ -303,7 +303,7 @@ func runDebugParse(env *command.Env, name string) error {
 			if j > 0 {
 				fmt.Println()
 			}
-			fmt.Printf(" + inner packet %d.%d: %v (%d bytes)\n", i+1, j+1, pkt.Type, len(pkt.Data))
+			fmt.Printf(" + inner packet %d.%d: [%d] %v (%d bytes)\n", i+1, j+1, byte(pkt.Type), pkt.Type, len(pkt.Data))
 			switch pkt.Type {
 			case packet.ActiveKeyType:
 				fmt.Printf("   active key id: %d\n", binary.BigEndian.Uint32(pkt.Data))
