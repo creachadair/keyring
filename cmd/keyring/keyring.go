@@ -317,11 +317,7 @@ func hexDump(w io.Writer, data []byte, indent string) {
 		} else {
 			fmt.Fprint(w, " ")
 		}
-		if b >= ' ' && b < 0x80 {
-			fmt.Fprintf(w, " %c", b)
-		} else {
-			fmt.Fprintf(w, "%02x", b)
-		}
+		fmt.Fprintf(w, "%02x", b)
 		col++
 		if col == numCols {
 			fmt.Fprintln(w)
