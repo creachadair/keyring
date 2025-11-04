@@ -31,10 +31,10 @@
 //
 //	r.Activate(id)
 //
-// To retrieve a key version, use [Ring.Append]:
+// To retrieve a key version, use [Ring.Get]:
 //
 //	var buf []byte
-//	buf = r.Append(id, buf)
+//	buf = r.Get(id, buf)
 //
 // This method will panic if the provided ID is unknown. Use [Ring.Has] to test
 // whether a given version is present:
@@ -43,9 +43,9 @@
 //	   log.Printf("Key id %v is present", id)
 //	}
 //
-// Use [Ring.AppendActive] get the id and content of the active version:
+// Use [Ring.GetActive] get the id and content of the active version:
 //
-//	id, buf := r.AppendActive(buf)
+//	id, buf := r.GetActive(buf)
 //
 // # Storage
 //
@@ -327,13 +327,13 @@ func (r *Ring) Active() ID { return r.view.Active() }
 // Has reports whether v contains a key with the given ID.
 func (r *Ring) Has(id ID) bool { return r.view.Has(id) }
 
-// Append appends the contents of the specified key to buf, and returns the
+// Get appends the contents of the specified key to buf, and returns the
 // resulting slice. It panics if id does not exist in r.
-func (r *Ring) Append(id ID, buf []byte) []byte { return r.view.Append(id, buf) }
+func (r *Ring) Get(id ID, buf []byte) []byte { return r.view.Get(id, buf) }
 
-// AppendActive appends the contents of the active key to buf, and returns
-// active ID and the updated slice.
-func (r *Ring) AppendActive(buf []byte) (ID, []byte) { return r.view.AppendActive(buf) }
+// GetActive appends the contents of the active key to buf, and returns active
+// ID and the updated slice.
+func (r *Ring) GetActive(buf []byte) (ID, []byte) { return r.view.GetActive(buf) }
 
 // Activate activates the specified key ID in r. It has no effect if the given
 // key ID is already active. It panics if id does not exist in r.

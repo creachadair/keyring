@@ -154,7 +154,7 @@ func runList(env *command.Env, name string) error {
 		if !r.Has(id) {
 			continue
 		}
-		key := r.Append(id, nil)
+		key := r.Get(id, nil)
 		fmt.Printf("%d: ", id)
 		if listFlags.ShowKeys {
 			if utf8.Valid(key) {

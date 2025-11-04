@@ -67,7 +67,7 @@ func TestBasic(t *testing.T) {
 	if id := r.Active(); id != 1 {
 		t.Errorf("Active: got %v, want 1", id)
 	}
-	if id, got := r.AppendActive(nil); id != 1 || string(got) != firstKey {
+	if id, got := r.GetActive(nil); id != 1 || string(got) != firstKey {
 		t.Errorf("Active key: got %v, %q, want %v, %q", id, got, 1, firstKey)
 	}
 
@@ -75,7 +75,7 @@ func TestBasic(t *testing.T) {
 	id2 := r.Add([]byte(secondKey))
 
 	// The new key should not be active yet.
-	if got := string(r.Append(r.Active(), nil)); got != firstKey {
+	if got := string(r.Get(r.Active(), nil)); got != firstKey {
 		t.Errorf("Active key: got %q, want %q", got, firstKey)
 	}
 
@@ -84,7 +84,7 @@ func TestBasic(t *testing.T) {
 	if id := r.Active(); id != id2 {
 		t.Errorf("Active: got %v, want %v", id, id2)
 	}
-	if id, got := r.AppendActive(nil); id != id2 || string(got) != secondKey {
+	if id, got := r.GetActive(nil); id != id2 || string(got) != secondKey {
 		t.Errorf("Active key: got %v, %q, want %v, %q", id, got, id2, secondKey)
 	}
 
@@ -116,7 +116,7 @@ func TestRoundTrip(t *testing.T) {
 	if id := r.Active(); id != 1 {
 		t.Errorf("Active: got %d, want 1", id)
 	}
-	if id, got := r.AppendActive(nil); id != 1 || string(got) != firstKey {
+	if id, got := r.GetActive(nil); id != 1 || string(got) != firstKey {
 		t.Errorf("Active key: got %v, %q, want %v, %q", id, got, 1, firstKey)
 	}
 
@@ -149,7 +149,7 @@ func TestRoundTrip(t *testing.T) {
 
 	var gotKeys []string
 	for id := range 5 {
-		gotKeys = append(gotKeys, string(r2.Append(id+1, nil)))
+		gotKeys = append(gotKeys, string(r2.Get(id+1, nil)))
 	}
 	if diff := cmp.Diff(gotKeys, testKeys); diff != "" {
 		t.Errorf("Decoded keys (-got, +want):\n%s", diff)
@@ -191,9 +191,9 @@ func TestErrors(t *testing.T) {
 		mtest.MustPanic(t, func() { r.Activate(12345) })
 	})
 
-	t.Run("AppendMissing", func(t *testing.T) {
-		mtest.MustPanic(t, func() { r.Append(0, nil) })
-		mtest.MustPanic(t, func() { r.Append(12345, nil) })
+	t.Run("GetMissing", func(t *testing.T) {
+		mtest.MustPanic(t, func() { r.Get(0, nil) })
+		mtest.MustPanic(t, func() { r.Get(12345, nil) })
 	})
 
 	t.Run("AddEmpty", func(t *testing.T) {
@@ -246,7 +246,7 @@ func TestRekey(t *testing.T) {
 	// Reading buf1 with k1 should work.
 	if r2, err := keyring.Read(k1, keyring.StaticKey(accessKey1)); err != nil {
 		t.Fatalf("Read k1 failed: %v", err)
-	} else if got := string(r2.Append(r2.Active(), nil)); got != testKey {
+	} else if got := string(r2.Get(r2.Active(), nil)); got != testKey {
 		t.Errorf("k1 active: got %q, want %q", got, testKey)
 	}
 
@@ -271,7 +271,7 @@ func TestRekey(t *testing.T) {
 		return accessKey2
 	}); err != nil {
 		t.Fatalf("Read k2 failed: %v", err)
-	} else if got := string(r2.Append(r2.Active(), nil)); got != testKey {
+	} else if got := string(r2.Get(r2.Active(), nil)); got != testKey {
 		t.Errorf("k2 active: got %q, want %q", got, testKey)
 	}
 }
@@ -301,8 +301,8 @@ func TestPassphraseKeys(t *testing.T) {
 		t.Fatalf("Read failed: %v", err)
 	}
 
-	got := string(r2.Append(r2.Active(), nil))
-	want := string(r2.Append(r2.Active(), nil))
+	got := string(r2.Get(r2.Active(), nil))
+	want := string(r2.Get(r2.Active(), nil))
 	if got != want {
 		t.Errorf("Got key %q, want %q", got, want)
 	}
@@ -322,20 +322,20 @@ func TestNoSharing(t *testing.T) {
 
 	// Editing the bytes we put in does not affect the stored copy.
 	clear(testKeyBytes)
-	if id, got := r.AppendActive(nil); id != 1 || string(got) != testKey {
+	if id, got := r.GetActive(nil); id != 1 || string(got) != testKey {
 		t.Errorf("Stored key modified: got %v, %q, want %v, %q", id, got, 1, testKey)
 	}
 
-	// Editing the results from Append does not affect the stored copy.
-	key := r.Append(r.Active(), nil)
+	// Editing the results from Get does not affect the stored copy.
+	key := r.Get(r.Active(), nil)
 	clear(key)
-	if got := r.Append(r.Active(), nil); string(got) != testKey {
+	if got := r.Get(r.Active(), nil); string(got) != testKey {
 		t.Errorf("Stored key modified: got %q, want %q", got, testKey)
 	}
 
-	testKeyBytes = r.Append(r.Active(), testKeyBytes[:0])
+	testKeyBytes = r.Get(r.Active(), testKeyBytes[:0])
 	if string(testKeyBytes) != testKey {
-		t.Errorf("Append: got %q, want %q", testKeyBytes, testKey)
+		t.Errorf("Get: got %q, want %q", testKeyBytes, testKey)
 	}
 }
 
@@ -354,7 +354,7 @@ func TestView(t *testing.T) {
 	if got, want := v.Len(), r.Len(); got != want {
 		t.Errorf("View len: got %d, want %d", got, want)
 	}
-	if id, got := v.AppendActive(nil); id != 1 || string(got) != testKey {
+	if id, got := v.GetActive(nil); id != 1 || string(got) != testKey {
 		t.Errorf("View append: got %v, %q, want %v, %q", id, got, 1, testKey)
 	}
 
@@ -364,7 +364,7 @@ func TestView(t *testing.T) {
 	if got, want := v.Len(), 1; got != want {
 		t.Errorf("View len: got %d, want %d", got, want)
 	}
-	if id, got := v.AppendActive(nil); id != 1 || string(got) != testKey {
+	if id, got := v.GetActive(nil); id != 1 || string(got) != testKey {
 		t.Errorf("View append: got %v, %q, want %v, %q", id, got, 1, testKey)
 	}
 
@@ -373,7 +373,7 @@ func TestView(t *testing.T) {
 		if n := v.Len(); n != 1 {
 			t.Errorf("Len is %d, want 1", n)
 		}
-		if id, got := v.AppendActive(nil); id != 1 || string(got) != testKey {
+		if id, got := v.GetActive(nil); id != 1 || string(got) != testKey {
 			t.Errorf("View append: got %v, %q, want %v, %q", id, got, 1, testKey)
 		}
 	})

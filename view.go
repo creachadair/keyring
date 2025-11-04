@@ -38,9 +38,9 @@ func (v *View) Active() ID { return v.keys[v.activeKey].ID }
 // Has reports whether v contains a key with the given ID.
 func (v *View) Has(id ID) bool { return packet.FindKey(v.keys, id) >= 0 }
 
-// Append appends the contents of the specified key to buf, and returns the
+// Get appends the contents of the specified key to buf, and returns the
 // resulting slice. It panics if id does not exist in r.
-func (v *View) Append(id ID, buf []byte) []byte {
+func (v *View) Get(id ID, buf []byte) []byte {
 	pos := packet.FindKey(v.keys, id)
 	if pos < 0 {
 		panic(fmt.Sprintf("keyring: no such key: %v", id))
@@ -48,9 +48,9 @@ func (v *View) Append(id ID, buf []byte) []byte {
 	return append(buf, v.keys[pos].Key...)
 }
 
-// AppendActive appends the contents of the active key to buf, and returns
-// active ID and the updated slice.
-func (v *View) AppendActive(buf []byte) (ID, []byte) {
+// GetActive appends the contents of the active key to buf, and returns active
+// ID and the updated slice.
+func (v *View) GetActive(buf []byte) (ID, []byte) {
 	ki := v.keys[v.activeKey]
 	return ki.ID, append(buf, ki.Key...)
 }
