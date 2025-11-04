@@ -83,11 +83,12 @@ func main() {
 }
 
 var createFlags struct {
-	Random int `flag:"random,Generate a random initial key of this length"`
+	Random int  `flag:"random,Generate a random initial key of this length"`
+	IsFile bool `flag:"file,Read the contents of the named file as the key"`
 }
 
 func runCreate(env *command.Env, name string, args ...string) error {
-	initialKey, err := getKeyFromArgs(env, args, createFlags.Random)
+	initialKey, err := getKeyFromArgs(env, args, createFlags.Random, createFlags.IsFile)
 	if err != nil {
 		return err
 	}
@@ -156,11 +157,12 @@ func runList(env *command.Env, name string) error {
 
 var addFlags struct {
 	Random   int  `flag:"random,Generate a random key of this length"`
+	IsFile   bool `flag:"file,Read the contents of the named file as the key"`
 	Activate bool `flag:"activate,Mark the new key as active immediately"`
 }
 
 func runAdd(env *command.Env, name string, args ...string) error {
-	newKey, err := getKeyFromArgs(env, args, addFlags.Random)
+	newKey, err := getKeyFromArgs(env, args, addFlags.Random, addFlags.IsFile)
 	if err != nil {
 		return err
 	}
@@ -360,10 +362,22 @@ func getPassphrase(tag string, confirm bool) (string, error) {
 	return pp, nil
 }
 
-func getKeyFromArgs(env *command.Env, args []string, random int) ([]byte, error) {
+func getKeyFromArgs(env *command.Env, args []string, random int, isFile bool) ([]byte, error) {
 	if len(args) > 1 {
 		return nil, env.Usagef("extra arguments after key: %v", args[1:])
 	} else if len(args) == 1 {
+		// The argument names a file.
+		if isFile {
+			key, err := os.ReadFile(args[0])
+			if err != nil {
+				return nil, err
+			} else if len(key) == 0 {
+				return nil, env.Usagef("key file is empty")
+			}
+			return key, nil
+		}
+
+		// The argument itself is the key.
 		if len(args[0]) == 0 {
 			return nil, env.Usagef("a key cannot be empty")
 		}
@@ -371,6 +385,8 @@ func getKeyFromArgs(env *command.Env, args []string, random int) ([]byte, error)
 	} else if random <= 0 {
 		return nil, env.Usagef("a key or --random is required")
 	}
+
+	// Generate a random key.
 	key := make([]byte, random)
 	crand.Read(key) // panics on error
 	fmt.Fprintf(env, "Generated %d-byte random key\n", len(key))
