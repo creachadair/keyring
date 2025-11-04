@@ -5,11 +5,13 @@ package main
 
 import (
 	crand "crypto/rand"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"unicode/utf8"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/creachadair/flax"
 	"github.com/creachadair/getpass"
 	"github.com/creachadair/keyring"
+	"github.com/creachadair/keyring/internal/packet"
 )
 
 var flags struct {
@@ -57,6 +60,20 @@ func main() {
 				Usage: "<keyring> <id>",
 				Help:  `Set the current active version in the keyring.`,
 				Run:   command.Adapt(runActivate),
+			},
+			{
+				Name:     "debug",
+				Help:     `Commands for debugging and inspection.`,
+				Unlisted: true,
+				Commands: []*command.C{
+					{
+						Name:     "parse",
+						Usage:    "<keyring>",
+						Help:     `Parse the binary format of the keyring.`,
+						SetFlags: command.Flags(flax.MustBind, &parseFlags),
+						Run:      command.Adapt(runDebugParse),
+					},
+				},
 			},
 			command.HelpCommand(nil),
 			command.VersionCommand(),
@@ -197,6 +214,123 @@ func runActivate(env *command.Env, name, idStr string) error {
 		}
 		return err
 	})
+}
+
+var parseFlags struct {
+	Decrypt bool `flag:"decrypt,Decrypt encrypted bundles (requires passphrase)"`
+}
+
+func runDebugParse(env *command.Env, name string) error {
+	data, err := os.ReadFile(name)
+	if err != nil {
+		return err
+	}
+
+	kr, err := packet.ParseKeyring(data)
+	if err != nil {
+		return err
+	}
+
+	// If we're supposed to decrypt and there are any bundles, grobble through
+	// for a data key and decrypt it. We're not being too picky here, if there
+	// are multiple key or salt packets we'll just try the first one.
+	var dataKey []byte
+	if parseFlags.Decrypt && slices.ContainsFunc(kr.Packets, func(p packet.Packet) bool {
+		return p.Type == packet.BundleType
+	}) {
+		saltp := slices.IndexFunc(kr.Packets, func(p packet.Packet) bool { return p.Type == packet.AccessKeySaltType })
+		datap := slices.IndexFunc(kr.Packets, func(p packet.Packet) bool { return p.Type == packet.DataKeyType })
+		if saltp < 0 || datap < 0 {
+			return errors.New("no data key found for encrypted bundles")
+		}
+
+		fmt.Fprintln(env, "Found encrypted bundles, passphrase required to decrypt")
+		pp, err := getPassphrase("", false)
+		if err != nil {
+			return err
+		}
+		accessKey := keyring.PassphraseKey(pp)(kr.Packets[saltp].Data)
+		dk, err := kr.Packets[datap].Decrypt(accessKey)
+		if err != nil {
+			return fmt.Errorf("invalid access key: %w", err)
+		}
+		dataKey = dk
+		fmt.Fprintln(env, "Unlocked data storage key")
+	}
+	fmt.Printf("Keyring version %02x, reserved %04x, %d packets\n", kr.Version, kr.Reserved[:], len(kr.Packets))
+
+	for i, pkt := range kr.Packets {
+		if i > 0 {
+			fmt.Println()
+		}
+		fmt.Printf("-- Packet %d: %v (%d bytes)\n", i+1, pkt.Type, len(pkt.Data))
+		if pkt.Type != packet.BundleType || dataKey == nil {
+			hexDump(os.Stdout, pkt.Data, "")
+			continue
+		}
+
+		// Reaching here, we have an encrypted bundle and are supposed to decrypt it.
+		dec, err := pkt.Decrypt(dataKey)
+		if err != nil {
+			return fmt.Errorf("decrypt packet %d: %w", i+1, err)
+		}
+		b, err := packet.ParsePackets(dec, 0)
+		if err != nil {
+			return fmt.Errorf("parse bundle %d: %w", i+1, err)
+		}
+
+		for j, pkt := range b {
+			if j > 0 {
+				fmt.Println()
+			}
+			fmt.Printf(" + inner packet %d.%d: %v (%d bytes)\n", i+1, j+1, pkt.Type, len(pkt.Data))
+			switch pkt.Type {
+			case packet.ActiveKeyType:
+				fmt.Printf("   active key id: %d\n", binary.BigEndian.Uint32(pkt.Data))
+			case packet.KeyringEntryType:
+				ki, err := packet.ParseKeyInfo(pkt.Data)
+				if err != nil {
+					fmt.Printf("   <invalid key info> %v\n", err)
+					break
+				}
+				fmt.Printf("   ID: %v, Key: ", ki.ID)
+				if utf8.Valid(ki.Key) {
+					fmt.Printf("%q\n", ki.Key)
+				} else {
+					fmt.Printf("%x\n", ki.Key)
+				}
+			default:
+				hexDump(os.Stdout, pkt.Data, "     ")
+			}
+		}
+	}
+	return nil
+}
+
+func hexDump(w io.Writer, data []byte, indent string) {
+	const numCols = 16
+
+	col := 0
+	for _, b := range data {
+		if col == 0 {
+			fmt.Fprint(w, indent)
+		} else {
+			fmt.Fprint(w, " ")
+		}
+		if b >= ' ' && b < 0x80 {
+			fmt.Fprintf(w, " %c", b)
+		} else {
+			fmt.Fprintf(w, "%02x", b)
+		}
+		col++
+		if col == numCols {
+			fmt.Fprintln(w)
+			col = 0
+		}
+	}
+	if col > 0 {
+		fmt.Fprintln(w)
+	}
 }
 
 func openAndReadKeyring(name string) (*keyring.Ring, error) {
