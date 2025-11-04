@@ -45,6 +45,17 @@
 // A bundle packet is a cipher packet whose AEAD sealed content is itself a
 // sequence of packets, encrypted with the data encryption key.  This package
 // encrypts using an AEAD over chacha20poly1305 with a 24-byte nonce.
+//
+// It is structurally valid for keyring entry (4) and active key id (5) packets
+// to occur at the top level of the encoding. However, the keyring API will
+// only store those packet typees inside a cipher packet.
+//
+// Likewise, cipher packets may contain subpackets of any type (including more
+// cipher packets), but the API expects only keyring entry and active key ID
+// packets inside a cipher packet. This package does not enforce those rules.
+//
+// Since the intended use of this format is to store cryptographic keys, there
+// is no compression, as random keys will be incompressible anyway.
 package packet
 
 import (
