@@ -7,7 +7,8 @@
 //
 //	Pos   | Size    | Description
 //	------|---------|--------------------------------------------------
-//	0     | 2       | Magic number [0xec 0x01]; 0x01 is format version
+//	0     | 1       | Magic number [0xec]
+//	1     | 1       | Format version [0x01]
 //	2     | 2       | Reserved [0x00 0x00]; must be zero in format 1
 //	4     | (rest)  | * packet (see below)
 //
