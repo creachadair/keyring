@@ -48,11 +48,11 @@
 //
 // It is structurally valid for keyring entry (4) and active key id (5) packets
 // to occur at the top level of the encoding. However, the keyring API will
-// only store those packet typees inside a cipher packet.
+// only store those packet types inside a bundle packet.
 //
-// Likewise, cipher packets may contain subpackets of any type (including more
-// cipher packets), but the API expects only keyring entry and active key ID
-// packets inside a cipher packet. This package does not enforce those rules.
+// Likewise, bundle packets may contain subpackets of any type (including more
+// bundle packets), but the API expects only keyring entry and active key ID
+// packets inside a bundle. This package does not enforce those rules.
 //
 // Since the intended use of this format is to store cryptographic keys, there
 // is no compression, as random keys will be incompressible anyway.
