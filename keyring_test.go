@@ -205,6 +205,11 @@ func TestErrors(t *testing.T) {
 		mtest.MustPanic(t, func() { r.AddRandom(0) })
 		mtest.MustPanic(t, func() { r.AddRandom(-1) })
 	})
+
+	t.Run("BadRandomKey", func(t *testing.T) {
+		mtest.MustPanic(t, func() { keyring.RandomKey(0) })
+		mtest.MustPanic(t, func() { keyring.RandomKey(-1) })
+	})
 }
 
 func TestRekey(t *testing.T) {

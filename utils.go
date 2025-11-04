@@ -57,3 +57,12 @@ func PassphraseKey(passphrase string) AccessKeyFunc {
 func AccessKeyFromPassphrase(passphrase string) (key, salt []byte) {
 	return cipher.KeyFromPassphrase(passphrase, AccessKeyLen, nil)
 }
+
+// RandomKey returns a randomly-generated key of the specified length.
+// It will panic if n ≤ 0.
+func RandomKey(n int) []byte {
+	if n <= 0 {
+		panic("keyring: key length must be positive")
+	}
+	return cipher.GenerateKey(n)
+}

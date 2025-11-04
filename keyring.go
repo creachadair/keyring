@@ -348,12 +348,7 @@ func (r *Ring) Activate(id ID) {
 // AddRandom adds a new randomly-generated n-byte key to r, and returns its ID.
 // It is shorthand for calling [Ring.Add] with a randomly-generated key.
 // It will panic if n ≤ 0.
-func (r *Ring) AddRandom(n int) ID {
-	if n <= 0 {
-		panic(fmt.Sprintf("keyring: key length %d is not positive", n))
-	}
-	return r.addBytes(cipher.GenerateKey(n))
-}
+func (r *Ring) AddRandom(n int) ID { return r.addBytes(RandomKey(n)) }
 
 // Add adds the specified non-empty key to r and returns its new ID.
 // If r is empty, the The added key is not marked active; use [Ring.Activate]
