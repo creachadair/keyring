@@ -5,7 +5,9 @@ package main
 
 import (
 	crand "crypto/rand"
+	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +15,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/creachadair/atomicfile"
@@ -35,9 +38,11 @@ func main() {
 
 		Commands: []*command.C{
 			{
-				Name:     "create",
-				Usage:    "<keyring> --random n\n<keyring> <initial-key>",
-				Help:     `Create a new keyring file.`,
+				Name:  "create",
+				Usage: "<keyring> --random n\n<keyring> <initial-key>",
+				Help: `Create a new keyring file.
+
+See "help key-format" for supported key formats.`,
 				SetFlags: command.Flags(flax.MustBind, &createFlags),
 				Run:      command.Adapt(runCreate),
 			},
@@ -49,9 +54,11 @@ func main() {
 				Run:      command.Adapt(runList),
 			},
 			{
-				Name:     "add",
-				Usage:    "<keyring> --random n\n<keyring> <new-key>",
-				Help:     `Add a new key to the keyring.`,
+				Name:  "add",
+				Usage: "<keyring> --random n\n<keyring> <new-key>",
+				Help: `Add a new key to the keyring.
+
+See "help key-format" for supported key formats.`,
 				SetFlags: command.Flags(flax.MustBind, &addFlags),
 				Run:      command.Adapt(runAdd),
 			},
@@ -75,7 +82,18 @@ func main() {
 					},
 				},
 			},
-			command.HelpCommand(nil),
+			command.HelpCommand([]command.HelpTopic{{
+				Name: "key-format",
+				Help: `Supported formats for encoding keys.
+
+Keys can be specified in various formats:
+
+- If the --file flag is set, the argument names a file to read.
+- The prefix "#x" indicates a string of hexadecimal digits (#x12ab).
+- The prefix "@" indcates a base64 string (@Eqs=).
+- The string "-" instructs the program to read the key from stdin.
+- Otherwise a key argument is taken verbatim.`,
+			}}),
 			command.VersionCommand(),
 		},
 	}
@@ -377,11 +395,14 @@ func getKeyFromArgs(env *command.Env, args []string, random int, isFile bool) ([
 			return key, nil
 		}
 
-		// The argument itself is the key.
-		if len(args[0]) == 0 {
-			return nil, env.Usagef("a key cannot be empty")
+		// The argument itself is the key, or stdin.
+		key, err := decodeKey(args[0])
+		if err != nil {
+			return nil, err
+		} else if len(key) == 0 {
+			return nil, env.Usagef("a key may not be empty")
 		}
-		return []byte(args[0]), nil
+		return key, nil
 	} else if random <= 0 {
 		return nil, env.Usagef("a key or --random is required")
 	}
@@ -391,4 +412,15 @@ func getKeyFromArgs(env *command.Env, args []string, random int, isFile bool) ([
 	crand.Read(key) // panics on error
 	fmt.Fprintf(env, "Generated %d-byte random key\n", len(key))
 	return key, nil
+}
+
+func decodeKey(s string) ([]byte, error) {
+	if s == "-" {
+		return io.ReadAll(os.Stdin)
+	} else if t := strings.TrimPrefix(s, "#x"); t != s {
+		return hex.DecodeString(t)
+	} else if t := strings.TrimPrefix(s, "@"); t != s {
+		return base64.StdEncoding.DecodeString(t)
+	}
+	return []byte(s), nil
 }
