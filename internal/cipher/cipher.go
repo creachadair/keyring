@@ -70,11 +70,10 @@ func DecryptWithKey(key, data, extra []byte) ([]byte, error) {
 	return aead.Open(nil, nonce, ctext, extra)
 }
 
-// KeyFromPassphrase returns a cryptographic key of n byte, derived via
-// [pbkdf2.Key] using the specified passphrase and a random salt.
-// If salt == nil, a new random salt is generated and returned; otherwise
-// the provided value is used in the KDF.
-// The key and the salt are returned.
+// KeyFromPassphrase returns a cryptographic key of n bytes, derived via
+// [pbkdf2.Key] from the specified passphrase and a random salt.
+// If salt == nil, a new random salt is generated and returned; otherwise the
+// provided value is used in the KDF.  The key and the salt are returned.
 func KeyFromPassphrase(passphrase string, n int, salt []byte) (_key, _salt []byte) {
 	if salt == nil {
 		salt = make([]byte, 32)
