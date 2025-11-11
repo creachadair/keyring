@@ -111,22 +111,29 @@ func runCreate(env *command.Env, name string, args ...string) error {
 		return err
 	}
 
-	f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0700)
-	if err != nil {
-		return err
+	// Check early if the file already exists. We'll check again below to avoid
+	// TOCTTOU, this is just so we won't generate a keyring when it's obviously
+	// going to collide later.
+	if _, err := os.Stat(name); err == nil {
+		return fmt.Errorf("file %q already exists, remove or rename it first", name)
 	}
-	defer f.Close()
 
 	pp, err := getPassphrase("New ", true)
 	if err != nil {
 		return err
 	}
+
 	accessKey, accessKeySalt := keyring.AccessKeyFromPassphrase(pp)
 	r, err := keyring.New(keyring.Config{
 		InitialKey:    initialKey,
 		AccessKey:     accessKey,
 		AccessKeySalt: accessKeySalt,
 	})
+	if err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0700)
 	if err != nil {
 		return err
 	}
