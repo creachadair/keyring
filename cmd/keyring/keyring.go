@@ -244,7 +244,8 @@ func runActivate(env *command.Env, name, idStr string) error {
 }
 
 var parseFlags struct {
-	Decrypt bool `flag:"decrypt,Decrypt encrypted bundles (requires passphrase)"`
+	Decrypt  bool `flag:"decrypt,Decrypt encrypted bundles (requires passphrase)"`
+	ShowKeys bool `flag:"show-keys,Show plaintext key contents (implies --decrypt)"`
 }
 
 func runDebugParse(env *command.Env, name string) error {
@@ -262,9 +263,9 @@ func runDebugParse(env *command.Env, name string) error {
 	// for a data key and decrypt it. We're not being too picky here, if there
 	// are multiple key or salt packets we'll just try the first one.
 	var dataKey []byte
-	if parseFlags.Decrypt && slices.ContainsFunc(kr.Packets, func(p packet.Packet) bool {
+	if parseFlags.ShowKeys || (parseFlags.Decrypt && slices.ContainsFunc(kr.Packets, func(p packet.Packet) bool {
 		return p.Type == packet.BundleType
-	}) {
+	})) {
 		saltp := slices.IndexFunc(kr.Packets, func(p packet.Packet) bool { return p.Type == packet.AccessKeySaltType })
 		datap := slices.IndexFunc(kr.Packets, func(p packet.Packet) bool { return p.Type == packet.DataKeyType })
 		if saltp < 0 || datap < 0 {
@@ -293,6 +294,9 @@ func runDebugParse(env *command.Env, name string) error {
 		fmt.Printf("-- Packet %d: [%d] %v (%d bytes)\n", i+1, byte(pkt.Type), pkt.Type, len(pkt.Data))
 		if pkt.Type != packet.BundleType || dataKey == nil {
 			hexDump(os.Stdout, pkt.Data, "")
+			if parseFlags.ShowKeys && pkt.Type == packet.DataKeyType && dataKey != nil {
+				fmt.Printf("* Plaintext:\n  %x\n", dataKey)
+			}
 			continue
 		}
 
@@ -321,7 +325,9 @@ func runDebugParse(env *command.Env, name string) error {
 					break
 				}
 				fmt.Printf("   ID: %v, Key: ", ki.ID)
-				if utf8.Valid(ki.Key) {
+				if !parseFlags.ShowKeys {
+					fmt.Printf("[%d bytes]\n", len(ki.Key))
+				} else if utf8.Valid(ki.Key) {
 					fmt.Printf("%q\n", ki.Key)
 				} else {
 					fmt.Printf("%x\n", ki.Key)
