@@ -55,7 +55,7 @@ func Example() {
 	// Key 2: "no more secrets"
 	// Active ID before: 1
 	// Active ID after: 2
-	// Encoded keyring is 215 bytes
+	// Encoded keyring is 199 bytes
 	//
 	// (reloaded)
 	// Key 2: "no more secrets"

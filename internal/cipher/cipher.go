@@ -5,11 +5,10 @@
 package cipher
 
 import (
-	"crypto/pbkdf2"
 	crand "crypto/rand"
-	"crypto/sha3"
 	"fmt"
 
+	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
@@ -71,19 +70,16 @@ func DecryptWithKey(key, data, extra []byte) ([]byte, error) {
 }
 
 // KeyFromPassphrase returns a cryptographic key of n bytes, derived via
-// [pbkdf2.Key] from the specified passphrase and a random salt.
+// [argon2.IDKey] from the specified passphrase and a random salt.
 // If salt == nil, a new random salt is generated and returned; otherwise the
 // provided value is used in the KDF.  The key and the salt are returned.
 func KeyFromPassphrase(passphrase string, n int, salt []byte) (_key, _salt []byte) {
 	if salt == nil {
-		salt = make([]byte, 32)
+		salt = make([]byte, 16)
 		crand.Read(salt)
 	}
-	key, err := pbkdf2.Key(sha3.New256, passphrase, salt, 4096, n)
-	if err != nil {
-		// Can only happen if we violate FIPS key length or digest rules, both of
-		// which should never happen with our usage patterns.
-		panic(fmt.Sprintf("pbkdf2.Key failed: %v", err))
-	}
+	// Parameters adapted from:
+	// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
+	key := argon2.IDKey([]byte(passphrase), salt, 3, 16*1024, 1, uint32(n))
 	return key, salt
 }
