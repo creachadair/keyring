@@ -294,8 +294,12 @@ func runDebugParse(env *command.Env, name string) error {
 		fmt.Printf("-- Packet %d: [%d] %v (%d bytes)\n", i+1, byte(pkt.Type), pkt.Type, len(pkt.Data))
 		if pkt.Type != packet.BundleType || dataKey == nil {
 			hexDump(os.Stdout, pkt.Data, "")
-			if parseFlags.ShowKeys && pkt.Type == packet.DataKeyType && dataKey != nil {
-				fmt.Printf("* Plaintext:\n  %x\n", dataKey)
+			if pkt.Type == packet.DataKeyType && dataKey != nil {
+				if parseFlags.ShowKeys {
+					fmt.Printf("* Plaintext\n  %x\n", dataKey)
+				} else if parseFlags.Decrypt {
+					fmt.Printf("* Plaintext: [%d bytes]\n", len(dataKey))
+				}
 			}
 			continue
 		}
