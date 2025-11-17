@@ -69,6 +69,12 @@ See "help key-format" for supported key formats.`,
 				Run:   command.Adapt(runActivate),
 			},
 			{
+				Name:  "rekey",
+				Usage: "<keyring>",
+				Help:  `Change the data encryption key for the keyring.`,
+				Run:   command.Adapt(runRekey),
+			},
+			{
 				Name:     "debug",
 				Help:     `Commands for debugging and inspection.`,
 				Unlisted: true,
@@ -234,6 +240,29 @@ func runActivate(env *command.Env, name, idStr string) error {
 
 	r.Activate(id)
 	fmt.Printf("Activated key id %d\n", id)
+	return atomicfile.Tx(name, 0700, func(w io.Writer) error {
+		nw, err := r.WriteTo(w)
+		if err == nil {
+			fmt.Fprintf(env, "Wrote %d bytes to %q\n", nw, filepath.Base(name))
+		}
+		return err
+	})
+}
+
+func runRekey(env *command.Env, name string) error {
+	r, err := openAndReadKeyring(name)
+	if err != nil {
+		return err
+	}
+
+	pp, err := getPassphrase("New ", true)
+	if err != nil {
+		return err
+	}
+
+	if err := r.Rekey(keyring.AccessKeyFromPassphrase(pp)); err != nil {
+		return err
+	}
 	return atomicfile.Tx(name, 0700, func(w io.Writer) error {
 		nw, err := r.WriteTo(w)
 		if err == nil {
