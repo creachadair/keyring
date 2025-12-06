@@ -7,7 +7,7 @@ require (
 	github.com/creachadair/command v0.2.0
 	github.com/creachadair/flax v0.0.5
 	github.com/creachadair/getpass v0.3.0
-	github.com/creachadair/mds v0.25.13
+	github.com/creachadair/mds v0.25.15
 	github.com/google/go-cmp v0.7.0
 	golang.org/x/crypto v0.45.0
 )
