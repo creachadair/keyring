@@ -44,7 +44,7 @@ type AccessKeyFunc func([]byte) []byte
 func StaticKey(key []byte) AccessKeyFunc { return func([]byte) []byte { return key } }
 
 // PassphraseKey returns an access key generation function generates an access
-// key using PBKDF2 on the provided passphrase and the stored salt.
+// key using argon2id on the provided passphrase and the stored salt.
 func PassphraseKey(passphrase string) AccessKeyFunc {
 	return func(salt []byte) []byte {
 		key, _ := cipher.KeyFromPassphrase(passphrase, AccessKeyLen, salt)
@@ -53,7 +53,7 @@ func PassphraseKey(passphrase string) AccessKeyFunc {
 }
 
 // AccessKeyFromPassphrase generates a key from the specified passphrase using
-// PBKDF2 and a random salt. It returns the key and the salt.
+// argon2id and a random salt. It returns the key and the salt.
 func AccessKeyFromPassphrase(passphrase string) (key, salt []byte) {
 	return cipher.KeyFromPassphrase(passphrase, AccessKeyLen, nil)
 }

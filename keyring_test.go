@@ -279,7 +279,7 @@ func TestRekey(t *testing.T) {
 func TestPassphraseKeys(t *testing.T) {
 	const passphrase = "character is what you are in the dark"
 
-	// Derive a key from passphrase with PBKDF2, and use it to create a keyring.
+	// Derive a key from passphrase with argon2id, and use it to create a keyring.
 	key, salt := keyring.AccessKeyFromPassphrase(passphrase)
 	r, err := keyring.New(keyring.Config{
 		AccessKey:     key,
