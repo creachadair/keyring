@@ -105,6 +105,14 @@
 // derived do not affect the view. While a [Ring] is not safe for concurrent
 // access by multiple goroutines without separate synchronization, a [View] can
 // be shared among multiple goroutines safely.
+//
+// # Deletion
+//
+// A [Ring] intentionally does not support explicit deletion of keys. Once a
+// key version has been used to encrypt data, deleting it would render those
+// data unreadable. A newly-added and unused key could be safely removed, but
+// the API omits this functionality to avoid accidental misuse. To remove a new
+// and unused key, create a new keyring and copy over the key material.
 package keyring
 
 import (
