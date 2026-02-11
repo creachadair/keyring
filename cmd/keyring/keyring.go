@@ -463,9 +463,9 @@ func getKeyFromArgs(env *command.Env, args []string, random int, isFile bool) ([
 func decodeKey(s string) ([]byte, error) {
 	if s == "-" {
 		return io.ReadAll(os.Stdin)
-	} else if t := strings.TrimPrefix(s, "#x"); t != s {
+	} else if t, ok := strings.CutPrefix(s, "#x"); ok {
 		return hex.DecodeString(t)
-	} else if t := strings.TrimPrefix(s, "@"); t != s {
+	} else if t, ok := strings.CutPrefix(s, "@"); ok {
 		return base64.StdEncoding.DecodeString(t)
 	}
 	return []byte(s), nil
