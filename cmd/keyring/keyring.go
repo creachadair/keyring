@@ -96,7 +96,7 @@ Keys can be specified in various formats:
 
 - If the --file flag is set, the argument names a file to read.
 - The prefix "#x" indicates a string of hexadecimal digits (#x12ab).
-- The prefix "@" indcates a base64 string (@Eqs=).
+- The prefix "@" indicates a base64 string (@Eqs=).
 - The string "-" instructs the program to read the key from stdin.
 - Otherwise a key argument is taken verbatim.`,
 			}}),
