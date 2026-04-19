@@ -4,15 +4,15 @@ go 1.25.0
 
 require (
 	github.com/creachadair/atomicfile v0.4.1
-	github.com/creachadair/command v0.2.1
+	github.com/creachadair/command v0.2.2
 	github.com/creachadair/flax v0.0.5
 	github.com/creachadair/getpass v0.3.0
-	github.com/creachadair/mds v0.26.2
+	github.com/creachadair/mds v0.27.1
 	github.com/google/go-cmp v0.7.0
-	golang.org/x/crypto v0.49.0
+	golang.org/x/crypto v0.50.0
 )
 
 require (
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/term v0.41.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/term v0.42.0 // indirect
 )
