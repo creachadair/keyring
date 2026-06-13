@@ -193,12 +193,12 @@ var addFlags struct {
 }
 
 func runAdd(env *command.Env, name string, args ...string) error {
-	newKey, err := getKeyFromArgs(env, args, addFlags.Random, addFlags.IsFile)
+	r, err := openAndReadKeyring(name)
 	if err != nil {
 		return err
 	}
 
-	r, err := openAndReadKeyring(name)
+	newKey, err := getKeyFromArgs(env, args, addFlags.Random, addFlags.IsFile)
 	if err != nil {
 		return err
 	}
