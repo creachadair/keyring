@@ -6,8 +6,8 @@ github.com/creachadair/flax v0.0.6 h1:IFUdRdfKynNTyR5SRlrHMUGnxxMZZen8RVpwcDq/ft
 github.com/creachadair/flax v0.0.6/go.mod h1:F1PML0JZLXSNDMNiRGK2yjm5f+L9QCHchyHBldFymj8=
 github.com/creachadair/getpass v0.3.2 h1:uPcuIx/aQV2yu9C9yvHnaL50equaoH0h/EZ2FvU4WjU=
 github.com/creachadair/getpass v0.3.2/go.mod h1:BDvz10oKkTg8LHYncI+UH6Q7l6V+t/4Gz8/b062m508=
-github.com/creachadair/mds v0.29.0 h1:LyR8pWAj2ofsrdJ9s2YoIqN8b6a1djHmPQULD2fTSCA=
-github.com/creachadair/mds v0.29.0/go.mod h1:dMBTCSy3iS3dwh4Rb1zxeZz2d7K8+N24GCTsayWtQRI=
+github.com/creachadair/mds v0.29.2 h1:1IBhfyolZUCA53twI1hXembOdpIe4bJ4OGJELBbGrN4=
+github.com/creachadair/mds v0.29.2/go.mod h1:dMBTCSy3iS3dwh4Rb1zxeZz2d7K8+N24GCTsayWtQRI=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 golang.org/x/crypto v0.53.0 h1:QZ4Muo8THX6CizN2vPPd5fBGHyogrdK9fG4wLPFUsto=
