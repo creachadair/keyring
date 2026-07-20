@@ -23,6 +23,7 @@ import (
 	"github.com/creachadair/flax"
 	"github.com/creachadair/getpass"
 	"github.com/creachadair/keyring"
+	"github.com/creachadair/keyring/internal/cipher"
 	"github.com/creachadair/keyring/internal/packet"
 )
 
@@ -151,7 +152,8 @@ func runCreate(env *command.Env, name string, args ...string) error {
 }
 
 var listFlags struct {
-	ShowKeys bool `flag:"show-keys,Show the contents of the keys"`
+	Fingerprint bool `flag:"fingerprint,Show fingerprints of key contents"`
+	ShowKeys    bool `flag:"unsafe-show-keys,Show the full contents of each stored key (caution)"`
 }
 
 func runList(env *command.Env, name string) error {
@@ -168,15 +170,12 @@ func runList(env *command.Env, name string) error {
 			continue
 		}
 		key := r.Get(id, nil)
-		fmt.Printf("%d: ", id)
+		fmt.Printf("%d: %d bytes", id, len(key))
 		if listFlags.ShowKeys {
-			if utf8.Valid(key) {
-				fmt.Printf("%q", key)
-			} else {
-				fmt.Printf("%x", key)
-			}
-		} else {
-			fmt.Printf("%d bytes", len(key))
+			fmt.Print(" ", prettyKey(key))
+		}
+		if listFlags.Fingerprint {
+			fmt.Print(" ", cipher.KeyFingerprintString(key))
 		}
 		if id == active {
 			fmt.Print(" [active]")
@@ -184,6 +183,13 @@ func runList(env *command.Env, name string) error {
 		fmt.Println()
 	}
 	return nil
+}
+
+func prettyKey(key []byte) string {
+	if utf8.Valid(key) {
+		return fmt.Sprintf("%q", key)
+	}
+	return fmt.Sprintf("%x", key)
 }
 
 var addFlags struct {
@@ -274,7 +280,7 @@ func runRekey(env *command.Env, name string) error {
 
 var parseFlags struct {
 	Decrypt  bool `flag:"decrypt,Decrypt encrypted bundles (requires passphrase)"`
-	ShowKeys bool `flag:"show-keys,Show plaintext key contents (implies --decrypt)"`
+	ShowKeys bool `flag:"unsafe-show-keys,Show plaintext key contents (implies --decrypt)"`
 }
 
 func runDebugParse(env *command.Env, name string) error {
@@ -360,10 +366,8 @@ func runDebugParse(env *command.Env, name string) error {
 				fmt.Printf("   ID: %v, Key: ", ki.ID)
 				if !parseFlags.ShowKeys {
 					fmt.Printf("[%d bytes]\n", len(ki.Key))
-				} else if utf8.Valid(ki.Key) {
-					fmt.Printf("%q\n", ki.Key)
 				} else {
-					fmt.Printf("%x\n", ki.Key)
+					fmt.Println(prettyKey(ki.Key))
 				}
 			default:
 				hexDump(os.Stdout, pkt.Data, "     ")
