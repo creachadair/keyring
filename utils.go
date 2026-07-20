@@ -37,7 +37,7 @@ const AccessKeyLen = cipher.KeyLen // 32 bytes
 // salt. The implementation is not required to use the salt. It must return a
 // slice of exactly [AccessKeyLen] bytes. If the function reports an error, any
 // key material returned is ignored.
-type AccessKeyFunc func([]byte) ([]byte, error)
+type AccessKeyFunc func(salt []byte) ([]byte, error)
 
 // StaticKey returns an access key generation function that ignores the key
 // generation salt and returns the provided key without error.
