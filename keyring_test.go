@@ -5,6 +5,7 @@ package keyring_test
 import (
 	"bytes"
 	crand "crypto/rand"
+	"fmt"
 	"io"
 	mrand "math/rand/v2"
 	"strings"
@@ -131,11 +132,11 @@ func TestRoundTrip(t *testing.T) {
 	t.Logf("Encoded keyring as %d bytes", nw)
 
 	// Load the binary encoding back and check its contents.
-	r2, err := keyring.Read(&buf, func(salt []byte) []byte {
+	r2, err := keyring.Read(&buf, func(salt []byte) ([]byte, error) {
 		if got := string(salt); got != testSalt {
-			t.Errorf("Read: salt is %q, want %q", got, testSalt)
+			return nil, fmt.Errorf("salt is %q, want %q", got, testSalt)
 		}
-		return accessKey
+		return accessKey, nil
 	})
 	if err != nil {
 		t.Fatalf("Read failed: %v", err)
@@ -263,12 +264,12 @@ func TestRekey(t *testing.T) {
 
 	// Reading buf2 with k2 should work.
 	k2.Seek(0, io.SeekStart)
-	if r2, err := keyring.Read(k2, func(salt []byte) []byte {
+	if r2, err := keyring.Read(k2, func(salt []byte) ([]byte, error) {
 		// Check that we kept the salt set during rekeying.
 		if got := string(salt); got != "acorn" {
-			t.Errorf("Wrong salt: got %q, want acorn", got)
+			return nil, fmt.Errorf("wrong salt: got %q, want acorn", got)
 		}
-		return accessKey2
+		return accessKey2, nil
 	}); err != nil {
 		t.Fatalf("Read k2 failed: %v", err)
 	} else if got := string(r2.Get(r2.Active(), nil)); got != testKey {

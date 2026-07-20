@@ -4,6 +4,7 @@ package keyring
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/creachadair/keyring/internal/cipher"
@@ -19,11 +20,11 @@ func TestRoundTripInternal(t *testing.T) {
 		t.Fatalf("Encrypt data key: %v", err)
 	}
 
-	afunc := func(salt []byte) []byte {
+	afunc := func(salt []byte) ([]byte, error) {
 		if got := string(salt); got != "salt" {
-			t.Errorf("Salt: got %q, want salt", got)
+			return nil, fmt.Errorf("salt: got %q, want salt", got)
 		}
-		return accessKey
+		return accessKey, nil
 	}
 
 	r := &Ring{

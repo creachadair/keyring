@@ -235,7 +235,10 @@ func Read(r io.Reader, accessKey AccessKeyFunc) (*Ring, error) {
 		return nil, errors.New("keyring: no data key found")
 	}
 
-	akey := accessKey(salt.Data)
+	akey, err := accessKey(salt.Data)
+	if err != nil {
+		return nil, fmt.Errorf("access key: %w", err)
+	}
 	if len(akey) != AccessKeyLen {
 		return nil, fmt.Errorf("access key is %d bytes, want %d", len(akey), AccessKeyLen)
 	}

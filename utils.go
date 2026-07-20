@@ -35,19 +35,20 @@ const AccessKeyLen = cipher.KeyLen // 32 bytes
 
 // AccessKeyFunc is a function that generates an access key from a generation
 // salt. The implementation is not required to use the salt. It must return a
-// slice of exactly [AccessKeyLen] bytes.
-type AccessKeyFunc func([]byte) []byte
+// slice of exactly [AccessKeyLen] bytes. If the function reports an error, any
+// key material returned is ignored.
+type AccessKeyFunc func([]byte) ([]byte, error)
 
 // StaticKey returns an access key generation function that ignores the key
-// generation salt and returns the provided key.
-func StaticKey(key []byte) AccessKeyFunc { return func([]byte) []byte { return key } }
+// generation salt and returns the provided key without error.
+func StaticKey(key []byte) AccessKeyFunc { return func([]byte) ([]byte, error) { return key, nil } }
 
 // PassphraseKey returns an access key generation function generates an access
 // key using argon2id on the provided passphrase and the stored salt.
 func PassphraseKey(passphrase string) AccessKeyFunc {
-	return func(salt []byte) []byte {
+	return func(salt []byte) ([]byte, error) {
 		key, _ := cipher.KeyFromPassphrase(passphrase, AccessKeyLen, salt)
-		return key
+		return key, nil
 	}
 }
 

@@ -312,7 +312,10 @@ func runDebugParse(env *command.Env, name string) error {
 		if err != nil {
 			return err
 		}
-		accessKey := keyring.PassphraseKey(pp)(kr.Packets[saltp].Data)
+		accessKey, err := keyring.PassphraseKey(pp)(kr.Packets[saltp].Data)
+		if err != nil {
+			return err
+		}
 		dk, err := kr.Packets[datap].Decrypt(accessKey)
 		if err != nil {
 			return fmt.Errorf("invalid access key: %w", err)
