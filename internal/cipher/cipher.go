@@ -6,6 +6,8 @@ package cipher
 
 import (
 	crand "crypto/rand"
+	"crypto/sha3"
+	"encoding/hex"
 	"fmt"
 
 	"golang.org/x/crypto/argon2"
@@ -82,4 +84,10 @@ func KeyFromPassphrase(passphrase string, n int, salt []byte) (_key, _salt []byt
 	// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
 	key := argon2.IDKey([]byte(passphrase), salt, 3, 16*1024, 1, uint32(n))
 	return key, salt
+}
+
+// KeyFingerprintString reports a human-readable cryptographic fingerprint for a key.
+func KeyFingerprintString(key []byte) string {
+	fp := sha3.Sum256(key)
+	return hex.EncodeToString(fp[:6])
 }
