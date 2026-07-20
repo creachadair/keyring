@@ -60,11 +60,9 @@ package packet
 
 import (
 	"bytes"
-	"cmp"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"slices"
 
 	"github.com/creachadair/keyring/internal/cipher"
 )
@@ -75,24 +73,8 @@ type KeyInfo struct {
 	Key []byte
 }
 
-func (ki KeyInfo) compareID(id int) int  { return cmp.Compare(ki.ID, id) }
-func (ki KeyInfo) compare(o KeyInfo) int { return cmp.Compare(ki.ID, o.ID) }
-
 // Clone returns a deep clone of ki.
 func (ki KeyInfo) Clone() KeyInfo { return KeyInfo{ID: ki.ID, Key: bytes.Clone(ki.Key)} }
-
-// FindKey reports the location of the specified id in keys, or -1.
-// Precondition: keys is sorted increasing by id.
-func FindKey(keys []KeyInfo, id int) int {
-	pos, ok := slices.BinarySearchFunc(keys, id, KeyInfo.compareID)
-	if ok {
-		return pos
-	}
-	return -1
-}
-
-// SortKeysByID sorts keys in-place by ID.
-func SortKeysByID(keys []KeyInfo) { slices.SortFunc(keys, KeyInfo.compare) }
 
 // ParseKeyInfo parses the binary encoding of a [KeyInfo] from data.
 // The parsed key contents alias a slice of data.
