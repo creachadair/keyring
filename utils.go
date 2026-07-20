@@ -12,7 +12,7 @@ import (
 // addCleanup adds cleanup handlers to make a best effort to zero out
 // unencrypted key material in r when r is reclaimed by the GC.
 func addCleanup(r *Ring) *Ring {
-	runtime.AddCleanup(r, func(keys []packet.KeyInfo) {
+	runtime.AddCleanup(r, func(keys map[ID]packet.KeyInfo) {
 		for _, ki := range keys {
 			clear(ki.Key)
 		}
@@ -23,12 +23,11 @@ func addCleanup(r *Ring) *Ring {
 
 func (r *Ring) addBytes(data []byte) ID {
 	r.maxID++
-	pos := len(r.view.keys)
-	r.view.keys = append(r.view.keys, packet.KeyInfo{
+	r.view.keys[r.maxID] = packet.KeyInfo{
 		ID:  int(r.maxID),
 		Key: data,
-	})
-	return ID(r.view.keys[pos].ID)
+	}
+	return r.maxID
 }
 
 // AccessKeyLen is the length in bytes of an access key.

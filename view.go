@@ -13,12 +13,12 @@ import (
 // material, Keys cannot be added to it, the active key ID cannot be changed,
 // and it cannot be written to storage.
 type View struct {
-	keys      []packet.KeyInfo
-	activeKey int
+	keys      map[ID]packet.KeyInfo
+	activeKey ID
 }
 
 func (v *View) clone() *View {
-	cp := make([]packet.KeyInfo, len(v.keys))
+	cp := make(map[ID]packet.KeyInfo, len(v.keys))
 	for i, ki := range v.keys {
 		cp[i] = ki.Clone()
 	}
@@ -33,19 +33,19 @@ func (r *Ring) View() *View { return r.view.clone() }
 func (v *View) Len() int { return len(v.keys) }
 
 // Active reports the current active key ID in v.
-func (v *View) Active() ID { return v.keys[v.activeKey].ID }
+func (v *View) Active() ID { return v.activeKey }
 
 // Has reports whether v contains a key with the given ID.
-func (v *View) Has(id ID) bool { return packet.FindKey(v.keys, id) >= 0 }
+func (v *View) Has(id ID) bool { _, ok := v.keys[id]; return ok }
 
 // Get appends the contents of the specified key to buf, and returns the
 // resulting slice. It panics if id does not exist in r.
 func (v *View) Get(id ID, buf []byte) []byte {
-	pos := packet.FindKey(v.keys, id)
-	if pos < 0 {
+	ki, ok := v.keys[id]
+	if !ok {
 		panic(fmt.Sprintf("keyring: no such key: %v", id))
 	}
-	return append(buf, v.keys[pos].Key...)
+	return append(buf, ki.Key...)
 }
 
 // GetActive appends the contents of the active key to buf, and returns active
@@ -61,7 +61,10 @@ func SingleKeyView(singleKey []byte) *View {
 	if len(singleKey) == 0 {
 		panic("keyring: key is empty")
 	}
-	return &View{keys: []packet.KeyInfo{
-		{ID: 1, Key: bytes.Clone(singleKey)},
-	}}
+	return &View{
+		keys: map[ID]packet.KeyInfo{
+			1: {ID: 1, Key: bytes.Clone(singleKey)},
+		},
+		activeKey: 1,
+	}
 }

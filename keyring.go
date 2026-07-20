@@ -120,9 +120,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/creachadair/keyring/internal/cipher"
 	"github.com/creachadair/keyring/internal/packet"
+	"github.com/creachadair/mds/slice"
 )
 
 // An ID identifies a particular version of a key stored in a [Ring].
@@ -174,7 +176,8 @@ func New(c Config) (*Ring, error) {
 		dkPlaintext:   pkey,
 		maxID:         1,
 		view: View{
-			keys: []packet.KeyInfo{{ID: 1, Key: bytes.Clone(c.InitialKey)}},
+			keys:      map[ID]packet.KeyInfo{1: {ID: 1, Key: bytes.Clone(c.InitialKey)}},
+			activeKey: 1,
 		},
 	}), nil
 }
@@ -290,26 +293,22 @@ func Read(r io.Reader, accessKey AccessKeyFunc) (*Ring, error) {
 	//
 	// This package will never generate duplicates and will always write the
 	// output in order, but we want to be defensive here.
-	var keys []packet.KeyInfo
+	keys := make(map[ID]packet.KeyInfo)
 	var maxID int
 	for i, e := range entries {
 		ki, err := packet.ParseKeyInfo(e.Data)
 		if err != nil {
 			return nil, fmt.Errorf("keyring entry %d: %w", i+1, err)
 		}
-		keys = append(keys, ki)
+		if old, ok := keys[ki.ID]; ok {
+			return nil, fmt.Errorf("keyring: duplicate ID %v for key %d", old.ID, i+1)
+		}
+		keys[ki.ID] = ki
 		if ki.ID > maxID {
 			maxID = ki.ID
 		}
 	}
-	packet.SortKeysByID(keys)
-	for i := range len(keys) - 1 {
-		if keys[i].ID == keys[i+1].ID {
-			return nil, fmt.Errorf("keyring: duplicate ID %v for key %d", keys[i].ID, i+1)
-		}
-	}
-	i := packet.FindKey(keys, activeKeyID)
-	if i < 0 {
+	if _, ok := keys[activeKeyID]; !ok {
 		return nil, fmt.Errorf("keyring: active key ID %v not found", activeKeyID)
 	}
 	return addCleanup(&Ring{
@@ -320,7 +319,7 @@ func Read(r io.Reader, accessKey AccessKeyFunc) (*Ring, error) {
 		dkPlaintext:   plainDK,
 		view: View{
 			keys:      keys,
-			activeKey: i,
+			activeKey: activeKeyID,
 		},
 		maxID: maxID,
 	}), nil
@@ -346,11 +345,10 @@ func (r *Ring) GetActive(buf []byte) (ID, []byte) { return r.view.GetActive(buf)
 // Activate activates the specified key ID in r. It has no effect if the given
 // key ID is already active. It panics if id does not exist in r.
 func (r *Ring) Activate(id ID) {
-	pos := packet.FindKey(r.view.keys, int(id))
-	if pos < 0 {
+	if _, ok := r.view.keys[id]; !ok {
 		panic(fmt.Sprintf("keyring: no such key: %v", id))
 	}
-	r.view.activeKey = pos
+	r.view.activeKey = id
 }
 
 // AddRandom adds a new randomly-generated n-byte key to r, and returns its ID.
@@ -397,9 +395,13 @@ func (r *Ring) WriteTo(w io.Writer) (int64, error) {
 
 	// The keys and active key ID go into an encrypted bundle.
 	var kb packet.Buffer
-	kb.AddActiveKey(r.view.keys[r.view.activeKey].ID)
-	for _, ki := range r.view.keys {
-		kb.AddKeyringEntry(ki)
+	kb.AddActiveKey(r.view.activeKey)
+
+	// Add keys in ID order for stability.
+	ids := slice.MapKeys(r.view.keys)
+	slices.Sort(ids)
+	for _, id := range ids {
+		kb.AddKeyringEntry(r.view.keys[id])
 	}
 	defer clear(kb.Bytes())
 

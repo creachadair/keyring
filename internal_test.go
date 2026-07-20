@@ -33,12 +33,12 @@ func TestRoundTripInternal(t *testing.T) {
 		dkPlaintext:   dataKey,
 
 		view: View{
-			keys: []packet.KeyInfo{
-				{ID: 1, Key: []byte("minsc")},
-				{ID: 2, Key: []byte("boo")},
-				{ID: 3, Key: []byte("dynaheir")},
+			keys: map[ID]packet.KeyInfo{
+				1: {ID: 1, Key: []byte("minsc")},
+				2: {ID: 2, Key: []byte("boo")},
+				3: {ID: 3, Key: []byte("dynaheir")},
 			},
-			activeKey: 1,
+			activeKey: 2,
 		},
 		maxID: 3,
 	}
