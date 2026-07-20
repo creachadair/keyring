@@ -87,6 +87,7 @@ See "help key-format" for supported key formats.`,
 						SetFlags: command.Flags(flax.MustBind, &parseFlags),
 						Run:      command.Adapt(runDebugParse),
 					},
+					command.InfoCommand("command-info"),
 				},
 			},
 			command.HelpCommand([]command.HelpTopic{{

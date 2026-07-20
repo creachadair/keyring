@@ -1,13 +1,13 @@
 github.com/creachadair/atomicfile v0.4.2 h1:pSSsKxmUefqCTg+QgyCG2bw1KmsB76apBL4lhJjichI=
 github.com/creachadair/atomicfile v0.4.2/go.mod h1:ts9VunJluQvSXtkrl0YlDn9ckZaS+eMkBW2g20gB5II=
-github.com/creachadair/command v0.2.9 h1:0SBcSpa5unLOaUE6z5rKWDuVikdDF6LTXTLdxSYvueo=
-github.com/creachadair/command v0.2.9/go.mod h1:nAflZ7hB5TAUpxGNm9w2iMn+GNCYVgDdzTJG08M+uhY=
+github.com/creachadair/command v0.2.10 h1:+qW9WcFTu8Cg8rM2RWa9pZU7Cv0sxdLQYjgMOTckD+M=
+github.com/creachadair/command v0.2.10/go.mod h1:p7iYfSCIAVz+oYYIsXsya1hjKgjitd3U/0eOrzTWkBQ=
 github.com/creachadair/flax v0.0.6 h1:IFUdRdfKynNTyR5SRlrHMUGnxxMZZen8RVpwcDq/ftk=
 github.com/creachadair/flax v0.0.6/go.mod h1:F1PML0JZLXSNDMNiRGK2yjm5f+L9QCHchyHBldFymj8=
 github.com/creachadair/getpass v0.3.2 h1:uPcuIx/aQV2yu9C9yvHnaL50equaoH0h/EZ2FvU4WjU=
 github.com/creachadair/getpass v0.3.2/go.mod h1:BDvz10oKkTg8LHYncI+UH6Q7l6V+t/4Gz8/b062m508=
-github.com/creachadair/mds v0.30.2 h1:cOP0xkfYkk4mxqPl4SmjnrY+agrpgiEqsVygLnPvJto=
-github.com/creachadair/mds v0.30.2/go.mod h1:dMBTCSy3iS3dwh4Rb1zxeZz2d7K8+N24GCTsayWtQRI=
+github.com/creachadair/mds v0.30.4 h1:Wfc4KnlGMlhwT73R0SG449pW0L0+v/PSsq14odXrZM8=
+github.com/creachadair/mds v0.30.4/go.mod h1:dMBTCSy3iS3dwh4Rb1zxeZz2d7K8+N24GCTsayWtQRI=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 golang.org/x/crypto v0.54.0 h1:YLIA59K4fiNzHzjnZt2tUJQjQtUWfWbeHBqKtk3eScw=
