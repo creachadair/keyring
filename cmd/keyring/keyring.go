@@ -171,11 +171,11 @@ func runList(env *command.Env, name string) error {
 		}
 		key := r.Get(id, nil)
 		fmt.Printf("%d: %d bytes", id, len(key))
-		if listFlags.ShowKeys {
-			fmt.Print(" ", prettyKey(key))
-		}
 		if listFlags.Fingerprint {
 			fmt.Print(" ", cipher.KeyFingerprintString(key))
+		}
+		if listFlags.ShowKeys {
+			fmt.Print(" ", prettyKey(key))
 		}
 		if id == active {
 			fmt.Print(" [active]")
