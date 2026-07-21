@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 	"unicode/utf8"
 
 	"github.com/creachadair/atomicfile"
@@ -165,25 +166,26 @@ func runList(env *command.Env, name string) error {
 
 	n := r.Len()
 	active := r.Active()
-	fmt.Printf("# %d total\n", n)
+	tw := tabwriter.NewWriter(os.Stdout, 4, 2, 1, ' ', 0)
+	fmt.Fprintf(tw, "# %d total\n", n)
 	for id := 1; id <= n; id++ {
 		if !r.Has(id) {
 			continue
 		}
 		key := r.Get(id, nil)
-		fmt.Printf("%d: %d bytes", id, len(key))
+		fmt.Fprintf(tw, "%d:\t%d bytes", id, len(key))
 		if listFlags.Fingerprint {
-			fmt.Print(" ", cipher.KeyFingerprintString(key))
+			fmt.Fprint(tw, "\t", cipher.KeyFingerprintString(key))
 		}
 		if listFlags.ShowKeys {
-			fmt.Print(" ", prettyKey(key))
+			fmt.Fprint(tw, "\t", prettyKey(key))
 		}
 		if id == active {
-			fmt.Print(" [active]")
+			fmt.Fprint(tw, "\t[active]")
 		}
-		fmt.Println()
+		fmt.Fprintln(tw)
 	}
-	return nil
+	return tw.Flush()
 }
 
 func prettyKey(key []byte) string {
