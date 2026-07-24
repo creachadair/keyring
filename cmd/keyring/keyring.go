@@ -355,6 +355,12 @@ func runDebugParse(env *command.Env, name string) error {
 			return fmt.Errorf("parse bundle %d: %w", i+1, err)
 		}
 
+		var activeKeyID int
+		if i := slices.IndexFunc(b, func(p packet.Packet) bool {
+			return p.Type == packet.ActiveKeyType
+		}); i >= 0 {
+			activeKeyID = int(binary.BigEndian.Uint32(b[i].Data))
+		}
 		for j, pkt := range b {
 			if j > 0 {
 				fmt.Println()
@@ -371,10 +377,14 @@ func runDebugParse(env *command.Env, name string) error {
 				}
 				fmt.Printf("   ID: %v, Key: ", ki.ID)
 				if !parseFlags.ShowKeys {
-					fmt.Printf("[%d bytes]\n", len(ki.Key))
+					fmt.Printf("[%d bytes]", len(ki.Key))
 				} else {
-					fmt.Println(prettyKey(ki.Key))
+					fmt.Print(prettyKey(ki.Key))
 				}
+				if ki.ID == activeKeyID {
+					fmt.Print(" ◁ active")
+				}
+				fmt.Println()
 			default:
 				hexDump(os.Stdout, pkt.Data, "     ")
 			}
