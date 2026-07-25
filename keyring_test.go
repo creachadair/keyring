@@ -38,6 +38,15 @@ func checkError(t *testing.T, label string, err error, text string) {
 	}
 }
 
+func checkZero(t *testing.T, data []byte) {
+	t.Helper()
+	for i, b := range data {
+		if b != 0 {
+			t.Errorf("byte %d = %d, want 0", i, b)
+		}
+	}
+}
+
 func checkHasKeys(t *testing.T, r *keyring.Ring, ids ...keyring.ID) {
 	t.Helper()
 	for _, id := range ids {
@@ -73,11 +82,18 @@ func TestBasic(t *testing.T) {
 	}
 
 	// Add a new key...
-	id2 := r.Add([]byte(secondKey))
+	k2 := []byte(secondKey)
+	id2 := r.Add(k2)
+	checkZero(t, k2)
 
 	// The new key should not be active yet.
 	if got := string(r.Get(r.Active(), nil)); got != firstKey {
 		t.Errorf("Active key: got %q, want %q", got, firstKey)
+	}
+
+	// ...but we should be able to read it explicitly.
+	if got := string(r.Get(id2, nil)); got != secondKey {
+		t.Errorf("New key: got %q, want %q", got, secondKey)
 	}
 
 	r.Activate(id2)
@@ -109,7 +125,9 @@ func TestRoundTrip(t *testing.T) {
 	}
 	wantID := []keyring.ID{r.Active()}
 	for _, key := range testKeys[1:] {
-		wantID = append(wantID, r.Add([]byte(key)))
+		bk := []byte(key)
+		wantID = append(wantID, r.Add(bk))
+		checkZero(t, bk)
 	}
 
 	// Verify basic properties.

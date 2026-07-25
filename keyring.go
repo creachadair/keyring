@@ -359,15 +359,19 @@ func (r *Ring) Activate(id ID) {
 // It will panic if n ≤ 0.
 func (r *Ring) AddRandom(n int) ID { return r.addBytes(RandomKey(n)) }
 
-// Add adds the specified non-empty key to r and returns its new ID.  The added
-// key is not marked active; use [Ring.Activate] to make it active. It panics
-// if len(key) == 0. Note that Add does not deduplicate keys; each call adds a
-// new key with a fresh ID, even if it is equal to an existing key.
+// Add adds a copy of the specified non-empty key to r, and returns its new ID.
+// It clears (zeroes) the contents of key before returning.
+// The added key is not marked active; use [Ring.Activate] to make it active.
+//
+// Add panics if len(key) == 0. Note that Add does not deduplicate keys; each
+// call adds a new key with a fresh ID, even if it is equal to an existing key.
 func (r *Ring) Add(key []byte) ID {
 	if len(key) == 0 {
 		panic("keyring: empty key")
 	}
-	return r.addBytes(bytes.Clone(key))
+	id := r.addBytes(bytes.Clone(key))
+	clear(key)
+	return id
 }
 
 // Rekey generates a new data storage key for r, and changes the access key to
