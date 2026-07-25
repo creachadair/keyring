@@ -84,7 +84,7 @@
 // The keyring will persist keySalt in storage, and will pass it to the
 // [AccessKeyFunc] provided when reading it:
 //
-//	r, err := keyring.Read(f, func(keySalt []byte) []byte {
+//	r, err := keyring.Read(f, func(keySalt []byte) ([]byte, error) {
 //	    return someKDF(baseKey, keySalt, ...)
 //	})
 //
