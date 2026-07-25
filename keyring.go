@@ -359,9 +359,10 @@ func (r *Ring) Activate(id ID) {
 // It will panic if n ≤ 0.
 func (r *Ring) AddRandom(n int) ID { return r.addBytes(RandomKey(n)) }
 
-// Add adds the specified non-empty key to r and returns its new ID.
-// If r is empty, the The added key is not marked active; use [Ring.Activate]
-// to make it active. It panics if len(key) == 0.
+// Add adds the specified non-empty key to r and returns its new ID.  The added
+// key is not marked active; use [Ring.Activate] to make it active. It panics
+// if len(key) == 0. Note that Add does not deduplicate keys; each call adds a
+// new key with a fresh ID, even if it is equal to an existing key.
 func (r *Ring) Add(key []byte) ID {
 	if len(key) == 0 {
 		panic("keyring: empty key")
