@@ -89,5 +89,5 @@ func KeyFromPassphrase(passphrase string, n int, salt []byte) (_key, _salt []byt
 // KeyFingerprintString reports a human-readable cryptographic fingerprint for a key.
 func KeyFingerprintString(key []byte) string {
 	fp := sha3.Sum256(key)
-	return hex.EncodeToString(fp[:6])
+	return hex.EncodeToString(fp[:4])
 }
